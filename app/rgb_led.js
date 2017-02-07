@@ -4,8 +4,8 @@ var sleep = require('sleep');
 var exports = module.exports = {};
 
 var config = {
-  clk_gpio:"/sys/class/gpio/gpio39/value",
-  data_gpio:"/sys/class/gpio/gpio38/value"
+  clk_gpio:"/sys/class/gpio/gpio13/value",
+  data_gpio:"/sys/class/gpio/gpio12/value"
 };
 
 exports.initRGB = function(opts) {

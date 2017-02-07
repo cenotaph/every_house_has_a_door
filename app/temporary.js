@@ -36,7 +36,7 @@ Logger.prototype.log = function(message){
 var logger = new Logger();
 
 function switch_relay(on){
- fs.writeFile("/sys/class/gpio/gpio7/value", on, function(err) {
+ fs.writeFile("/sys/class/gpio/gpio2/value", on, function(err) {
  if(err) {
    return logger.log(err);
  }
@@ -54,7 +54,7 @@ function toggle_relay(){
 
 
 function bip(on){
- fs.writeFile("/sys/class/gpio/gpio38/value", on, function(err) {
+ fs.writeFile("/sys/class/gpio/gpio75/value", on, function(err) {
  if(err) {
    return logger.log(err);
  }
@@ -134,54 +134,55 @@ device.on('read', function(tag) {
     if (tag.type == 68) {
       var address = tag.data.toString('hex').substring(0,20);
       var security_code = tag.data.toString('hex').substring(32,40);
+    } else if (tag.type == 4) {
+      var address = tag.data.toString('hex').substring(0,8);
+      var security_code = tag.data.toString('hex').substring(128,160);
+    } else {
+	console.log('what the fuck this is ' + tag.type);
+	console.log('data is ' + tag.data.toString('hex'));
+    }
+    var url = 'http://' + config.api + ":" + config.port + '/nfcs/' + address + '/auth_door';
 
-      var url = 'http://' + config.api + ":" + config.port + '/nfcs/' + address + '/auth_door';
 
-
-      console.log('tag address is ' + address);
-      console.log('security code is ' + security_code);
-      console.log('would query ' + url);
+    console.log('tag address is ' + address);
+    console.log('security code is ' + security_code);
+    console.log('would query ' + url);
   weblock.check('webapi.lock', function(error, isLocked) {
-      if (isLocked) {
-	console.log('not querying API again yet');
-      } else {
-     	weblock.lock('webapi.lock', function(er) {
-      	  request.get({url: url, 
-	    json: true,
-            qs: {securekey: security_code },
-            headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
-	 function (error, response, body) {
-	   if (!error && response.statusCode === 200) {
-	     console.log("Got a response: ", response.body.data)
-	     if (response.body.data = 'UNLOCK') {
+    if (isLocked) {
+      console.log('not querying API again yet');
+    } else {
+      weblock.lock('webapi.lock', function(er) {
+        request.get({url: url, 
+	  json: true,
+          qs: {securekey: security_code },
+          headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+	  function (error, response, body) {
+	    if (!error && response.statusCode === 200) {
+	      console.log("Got a response: ", response.body.data)
+	      if (response.body.data = 'UNLOCK') {
 		switch_relay(1);
 		bip(0);
                 toggle_bip(500);
-                led_ready();
+                led_success();
    		setTimeout(function() {
 		  switch_relay(0);
-		
 		}, 4000);
-             }
-           } else {
-             bip_error();
-	     if (response.statusCode == 401) {
-              console.log('Unauthorised (check your headers and access tokens)');
+               }
+            } else {
+              bip_error();
+	      if (response.statusCode == 401) {
+               console.log('Unauthorised (check your headers and access tokens)');
 	      } else {
                 console.log("Got an error: ", error, ", status code: ", response.statusCode);
               }
-           } 
-		weblock.unlock('webapi.lock', function(er) {
-		})
+            } 
+            weblock.unlock('webapi.lock', function(er) { })
 
           });
 	});
      }
    });
 
-    } else if (tag.type == 4) {
-      console.log('nfc other');
-    }
   }
 }).on('error', function(err) {
     // handle background error;
@@ -190,6 +191,5 @@ device.on('read', function(tag) {
 	
 
 bip(0);
-toggle_bip(500);
-led_ready();
+led_error();
 
