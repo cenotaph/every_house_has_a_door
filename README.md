@@ -1,0 +1,5 @@
+# every_house_has_a_door
+
+Primitive (for now) Node app to query Biathlon API for authorised keyholders to unlock door via NFC IDs.
+
+Repository name stolen from the Every House Has a Door performing arts group, because 'door' is a boring name for a GitHub repository. Thanks (or rather, sorry) Matthew & Lin.
