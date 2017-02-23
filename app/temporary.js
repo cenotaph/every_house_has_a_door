@@ -9,7 +9,7 @@ var weblock = require('lockfile');
 var led = require("./rgb_led.js");
 var yaml_config = require('node-yaml-config');
  
-var config = yaml_config.load('config/config.yml');
+var config = yaml_config.load('/opt/card_reader/config/config.yml');
  
 
 
@@ -144,22 +144,23 @@ device.on('read', function(tag) {
     var url = 'http://' + config.api + ":" + config.port + '/nfcs/' + address + '/auth_door';
 
 
-    console.log('tag address is ' + address);
-    console.log('security code is ' + security_code);
-    console.log('would query ' + url);
+    //    console.log('would query ' + url);
   weblock.check('webapi.lock', function(error, isLocked) {
     if (isLocked) {
       console.log('not querying API again yet');
     } else {
       weblock.lock('webapi.lock', function(er) {
+
+         console.log('-----')
+         console.log('tag address is ' + address);
         request.get({url: url, 
 	  json: true,
           qs: {securekey: security_code },
           headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
 	  function (error, response, body) {
 	    if (!error && response.statusCode === 200) {
-	      console.log("Got a response: ", response.body.data)
-	      if (response.body.data = 'UNLOCK') {
+	      console.log("Got a response for user: ", response.body.data.name);
+	      if (response.body.data) {
 		switch_relay(1);
 		bip(0);
                 toggle_bip(500);
@@ -175,8 +176,11 @@ device.on('read', function(tag) {
 	      } else {
                 console.log("Got an error: ", error, ", status code: ", response.statusCode);
               }
-            } 
-            weblock.unlock('webapi.lock', function(er) { })
+            }   
+            setTimeout(function() {
+	      weblock.unlock('webapi.lock', function(er) { });
+	    }, 6000);
+
 
           });
 	});
