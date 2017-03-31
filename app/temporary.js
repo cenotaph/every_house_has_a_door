@@ -8,6 +8,7 @@ var util = require('util');
 var weblock = require('lockfile');
 var led = require("./rgb_led.js");
 var yaml_config = require('node-yaml-config');
+require('log-timestamp');
  
 var config = yaml_config.load('/opt/card_reader/config/config.yml');
  
@@ -54,7 +55,7 @@ function toggle_relay(){
 
 
 function bip(on){
- fs.writeFile("/sys/class/gpio/gpio75/value", on, function(err) {
+ fs.writeFile("/sys/class/gpio/gpio20/value", on, function(err) {
  if(err) {
    return logger.log(err);
  }
@@ -159,7 +160,7 @@ device.on('read', function(tag) {
           headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
 	  function (error, response, body) {
 	    if (!error && response.statusCode === 200) {
-	      console.log("Got a response for user: ", response.body.data.name);
+	      console.log("Opened door for ", response.body.data.name);
 	      if (response.body.data) {
 		switch_relay(1);
 		bip(0);
